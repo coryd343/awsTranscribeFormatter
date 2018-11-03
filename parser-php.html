@@ -1,0 +1,64 @@
+<!doctype html>
+	<html>
+		<head>
+			<title>
+				AWS Transcript JSON to Blog Format
+			</title>
+			<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+			<script type="text/javascript" src="jquery.inlineEdit.js"></script>
+			<script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+			<style>
+			textarea{
+			width:100%;
+			height:100%;
+			}
+			</style>
+		</head>
+		<body>
+			<div class="container">
+  				<div id="AWSTranscribeJobname">JobName:</div>
+  				<div id="AWSTranscribejobStatus">Job Status:</div>
+  				<div id="AWSTranscribeaccountId">Account ID:</div>
+  				<div id="AWSTranscribenumberOfSpeakers">Number of Speakers:</div>
+  				<div id="AWSTranscribenumberOfSpeakersNames">Name of Speakers:</div>
+  				<div id="AWSTranscriberesults">Raw Results:</div>
+  				<div id="AWSTranscribeSpeakers">Raw Speakers:</div>
+  				<div id="content">
+  					<div id="AWSTranscribeTextItems">Raw Text Items:</div>
+  				</div>
+			</div>
+			<BR>
+		</body>
+		<!--Main parsing function goes here -->
+		<script src="transcribe.php"></script>
+		<script type="text/javascript">
+			$(function() {
+			  $('.editable').inlineEdit({
+			    control: 'textarea',
+			  });
+			});
+		</script>
+		<button onclick="copyToClipboard('AWSTranscribeTextItems'); alert('COPIED')">Copy AWSTranscribeTextItems</button>
+
+<!--- see solution from Alvaro Montoro on https://stackoverflow.com/questions/22581345/click-button-copy-to-clipboard-using-jquery --->
+		<script>
+			function copyToClipboard(elementId) {
+			  // Create a "hidden" input
+			  var aux = document.createElement("input");
+			  //TODO: Find and replace any of the spans used for the inline formatter
+			  var tmpText = document.getElementById(elementId).innerHTML
+			  
+			  // Assign it the value of the specified element
+			  aux.setAttribute("value", tmpText);
+			  // Append it to the body
+			  document.body.appendChild(aux);
+			  
+			  // Highlight its content
+			  aux.select();
+			  // Copy the highlighted text
+			  document.execCommand("copy");
+			  // Remove it from the body
+			  document.body.removeChild(aux);
+			}
+		</script>
+	</html>
