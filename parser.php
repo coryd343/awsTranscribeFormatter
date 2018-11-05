@@ -51,13 +51,14 @@
 						case "results":
 							$transcribeResults = $value['transcripts'][0]['transcript'];
 							$numSpeakers = $value['speaker_labels']['speakers'];
+							$segments = "";
 
-							$speakersArray = array();
 							$i = 0;
 							$currentSpeaker = "";
 							$textString = "";
 							foreach($value['speaker_labels']['segments'] as $segment => $segVal) {
 								if($segVal['speaker_label'] != $currentSpeaker) {
+									$segments .= $segVal['speaker_label'].", ".$segVal['start_time'].", ".$segVal['end_time']." || ";
 									$currentSpeaker = $segVal['speaker_label'];
 									$textString .= "<p> Speaker Change @ ".$segVal['start_time']."s: ".$segVal['speaker_label']."</p><p>";									
 								}
@@ -100,7 +101,7 @@
   				<div id="AWSTranscribenumberOfSpeakers">Number of Speakers: <?php echo $numSpeakers?></div>
   				<div id="AWSTranscribenumberOfSpeakersNames">Name of Speakers:</div>
   				<div id="AWSTranscriberesults">Raw Results: <?php if(isset($transcribeResults)) {echo $transcribeResults;}?></div>
-  				<div id="AWSTranscribeSpeakers">Raw Speakers: <?php print_r($speakersArray)?></div>
+  				<div id="AWSTranscribeSpeakers">Raw Speakers: <?php echo $segments?></div>
   				<div id="content">
   					<div id="AWSTranscribeTextItems">Raw Text Items: <?php echo $textString?></div>
   				</div>
