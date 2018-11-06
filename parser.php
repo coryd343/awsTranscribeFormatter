@@ -4,9 +4,6 @@
 			<title>
 				AWS Transcript JSON to Blog Format
 			</title>
-			<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
-			<script type="text/javascript" src="jquery.inlineEdit.js"></script>
-			<script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
 			<style>
 			textarea{
 			width:100%;
@@ -42,7 +39,7 @@
 		    	}
 		    }
 
-		    //$translateResponse = json_decode(do_curl_request($transcribeURL)); //AWSTranscribe JSON stored in associative array
+		    //$translateResponse = json_decode(do_curl_request($transcribeURL));
 		    foreach($translateAlHughes as $key => $value) {
 		    	switch($key) {
 						case "jobName":
@@ -63,26 +60,17 @@
 							$i = 0;
 							$j = 0;
 							$numWords = count($value['items']);
-							$currentSpeaker = "";//$value['speaker_labels']['segments'][0]['speaker_label'];
+							$currentSpeaker = $value['speaker_labels']['segments'][0]['speaker_label'];
 							$segStart = $value['speaker_labels']['segments'][0]['start_time'];
 							$segEnd = $value['speaker_labels']['segments'][0]['end_time'];
-							$textString = "";
+							$textString = "<p> Speaker Change @ ".$segStart."s: ".$currentSpeaker."</p><p>";
 
-							echo count($value['speaker_labels']['segments']) - 1;
+							//Main text processing loop
 							foreach($value['speaker_labels']['segments'] as $segment => $segVal) {
 								if($segVal['speaker_label'] == $currentSpeaker) {
 									$segEnd = $segVal['end_time'];
 								}
-								else if ($segNum != count($value['speaker_labels']['segments']) - 1) {
-									$segments[$j++] = array(
-										$currentSpeaker,
-										$segStart,
-										$segEnd
-									);/*
-									$segStart = $segVal['start_time'];
-									$segEnd = $segVal['end_time'];
-									$currentSpeaker = $segVal['speaker_label'];	*/
-								} else {
+								else {
 									$segments[$j++] = array(
 										$currentSpeaker,
 										$segStart,
@@ -93,8 +81,14 @@
 									$currentSpeaker = $segVal['speaker_label'];
 									$textString .= "<p> Speaker Change @ ".$segVal['start_time']."s: ".$segVal['speaker_label']."</p><p>";	
 								}
-
-								//echo "<p>Speaker: ".$segVal['speaker_label'].", Start: ".$segVal['start_time'].", End: ".$segVal['end_time']."</p>";
+								if($segNum == count($value['speaker_labels']['segments']) - 1) {
+									echo "<p>Last segment: ".$segNum."</p>";
+									$segments[$j++] = array(
+										$currentSpeaker,
+										$segStart,
+										$segEnd
+									);
+								}
 
 								do {
 									$currWord = $value['items'][$i]['alternatives'][0]['content'];
@@ -122,7 +116,6 @@
 								}
 								while($i < $numWords && ($value['items'][$i]['type'] == "punctuation" || ($value['items'][$i]['start_time'] >= $segVal['start_time'] && $value['items'][$i]['end_time'] <= $segVal['end_time'])));
 								$segNum++;
-								echo $segNum."</br>";
 							}
 							$textString .= "</p>";
 							break;
@@ -146,35 +139,4 @@
 			</div>
 			<BR>
 		</body>
-		<!--previous location of main script-->
-		<script type="text/javascript">
-			$(function() {
-			  $('.editable').inlineEdit({
-			    control: 'textarea',
-			  });
-			});
-		</script>
-		<button onclick="copyToClipboard('AWSTranscribeTextItems'); alert('COPIED')">Copy AWSTranscribeTextItems</button>
-
-<!--- see solution from Alvaro Montoro on https://stackoverflow.com/questions/22581345/click-button-copy-to-clipboard-using-jquery --->
-		<script>
-			function copyToClipboard(elementId) {
-			  // Create a "hidden" input
-			  var aux = document.createElement("input");
-			  //TODO: Find and replace any of the spans used for the inline formatter
-			  var tmpText = document.getElementById(elementId).innerHTML
-			  
-			  // Assign it the value of the specified element
-			  aux.setAttribute("value", tmpText);
-			  // Append it to the body
-			  document.body.appendChild(aux);
-			  
-			  // Highlight its content
-			  aux.select();
-			  // Copy the highlighted text
-			  document.execCommand("copy");
-			  // Remove it from the body
-			  document.body.removeChild(aux);
-			}
-		</script>
 	</html>
