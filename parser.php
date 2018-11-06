@@ -36,6 +36,12 @@
 		        return $response;
 		    }
 
+		    function readSegmentArray($segArray) {
+		    	for($i = 0; $i < count($segArray); $i++) {
+		    		echo $segArray[$i][0].", ".$segArray[$i][1].", ".$segArray[$i][2]." || ";
+		    	}
+		    }
+
 		    //$translateResponse = json_decode(do_curl_request($transcribeURL)); //AWSTranscribe JSON stored in associative array
 		    foreach($translateAlHughes as $key => $value) {
 		    	switch($key) {
@@ -51,40 +57,72 @@
 						case "results":
 							$transcribeResults = $value['transcripts'][0]['transcript'];
 							$numSpeakers = $value['speaker_labels']['speakers'];
-							$segments = "";
+							$segments = array();
 
+							$segNum = 0;
 							$i = 0;
-							$currentSpeaker = "";
+							$j = 0;
+							$numWords = count($value['items']);
+							$currentSpeaker = "";//$value['speaker_labels']['segments'][0]['speaker_label'];
+							$segStart = $value['speaker_labels']['segments'][0]['start_time'];
+							$segEnd = $value['speaker_labels']['segments'][0]['end_time'];
 							$textString = "";
+
+							echo count($value['speaker_labels']['segments']) - 1;
 							foreach($value['speaker_labels']['segments'] as $segment => $segVal) {
-								if($segVal['speaker_label'] != $currentSpeaker) {
-									$segments .= $segVal['speaker_label'].", ".$segVal['start_time'].", ".$segVal['end_time']." || ";
+								if($segVal['speaker_label'] == $currentSpeaker) {
+									$segEnd = $segVal['end_time'];
+								}
+								else if ($segNum != count($value['speaker_labels']['segments']) - 1) {
+									$segments[$j++] = array(
+										$currentSpeaker,
+										$segStart,
+										$segEnd
+									);/*
+									$segStart = $segVal['start_time'];
+									$segEnd = $segVal['end_time'];
+									$currentSpeaker = $segVal['speaker_label'];	*/
+								} else {
+									$segments[$j++] = array(
+										$currentSpeaker,
+										$segStart,
+										$segEnd
+									);
+									$segStart = $segVal['start_time'];
+									$segEnd = $segVal['end_time'];
 									$currentSpeaker = $segVal['speaker_label'];
-									$textString .= "<p> Speaker Change @ ".$segVal['start_time']."s: ".$segVal['speaker_label']."</p><p>";									
+									$textString .= "<p> Speaker Change @ ".$segVal['start_time']."s: ".$segVal['speaker_label']."</p><p>";	
 								}
+
+								//echo "<p>Speaker: ".$segVal['speaker_label'].", Start: ".$segVal['start_time'].", End: ".$segVal['end_time']."</p>";
+
 								do {
-									if($value['items'][$i]['type'] == "pronunciation")
-										$textString .= " ";
-									//Fix capitalization of "I"
 									$currWord = $value['items'][$i]['alternatives'][0]['content'];
-									switch($currWord) {
-										case "i":
-											$currWord = "I";
-											break;
-										case "i'm":
-											$currWord = "I'm";
-											break;
-										case "i'd":
-											$currWord = "I'd";
-											break;
-										case "i've":
-											$currWord = "I've";
-											break;
-										default:
-									}
+									if($value['items'][$i]['type'] == "pronunciation") {
+										$textString .= " ";
+										//Fix capitalization of "I"
+										switch($currWord) {
+											case "i":
+												$currWord = "I";
+												break;
+											case "i'm":
+												$currWord = "I'm";
+												break;
+											case "i'd":
+												$currWord = "I'd";
+												break;
+											case "i've":
+												$currWord = "I've";
+												break;
+											default:
+										}
+									}									
 									$textString .= $currWord;
+									$i++;
 								}
-								while($value['items'][$i++]['type'] == "pronunciation");
+								while($i < $numWords && ($value['items'][$i]['type'] == "punctuation" || ($value['items'][$i]['start_time'] >= $segVal['start_time'] && $value['items'][$i]['end_time'] <= $segVal['end_time'])));
+								$segNum++;
+								echo $segNum."</br>";
 							}
 							$textString .= "</p>";
 							break;
@@ -101,7 +139,7 @@
   				<div id="AWSTranscribenumberOfSpeakers">Number of Speakers: <?php echo $numSpeakers?></div>
   				<div id="AWSTranscribenumberOfSpeakersNames">Name of Speakers:</div>
   				<div id="AWSTranscriberesults">Raw Results: <?php if(isset($transcribeResults)) {echo $transcribeResults;}?></div>
-  				<div id="AWSTranscribeSpeakers">Raw Speakers: <?php echo $segments?></div>
+  				<div id="AWSTranscribeSpeakers">Raw Speakers: <?php readSegmentArray($segments)?></div>
   				<div id="content">
   					<div id="AWSTranscribeTextItems">Raw Text Items: <?php echo $textString?></div>
   				</div>
